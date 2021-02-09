@@ -15,8 +15,7 @@ package object http {
   object ShowInstances {
 
     implicit val headerShow: Show[Header] =
-      (header: Header) =>
-        s"Header - ${ header.name }: ${ header.value }"
+      (header: Header) => s"Header - ${header.name}: ${header.value}"
 
   }
 
@@ -50,7 +49,7 @@ package object http {
 
       final case class IncorrectHeaderValue(header: Header, expectedType: Class[_])
         extends HttpException(
-          show"The header contains incorrect value. $header, expectedType - ${ expectedType.getName }."
+          show"The header contains incorrect value. $header, expectedType - ${expectedType.getName}."
         )
 
     }

@@ -27,9 +27,7 @@ class SignedSecretVerifier(private val signingSecret: Secret)(implicit val logOf
       req.getHeader("X-Slack-Request-Timestamp")
         .flatMap(header => {
           Either.catchNonFatal(header.value.toLong)
-            .leftMap(_ =>
-              IncorrectHeaderValue(header, Long.getClass)
-            )
+            .leftMap(_ => IncorrectHeaderValue(header, Long.getClass))
         })
 
     def checkReplyAttack(timestamp: Long, localTimestamp: Long): Either[MiddlewareException, Unit] =
@@ -44,7 +42,6 @@ class SignedSecretVerifier(private val signingSecret: Secret)(implicit val logOf
       else
         ().asRight
 
-
     def generateSlackSignature(sharedSecret: String, text: String): IO[String] = {
 
       val HexArray = "0123456789ABCDEF".toCharArray
@@ -54,9 +51,9 @@ class SignedSecretVerifier(private val signingSecret: Secret)(implicit val logOf
         val hexChars = new Array[Char](bytes.length * 2)
         var j = 0
         while (j < bytes.length) {
-          val v = bytes(j) & 0xFF
+          val v = bytes(j) & 0xff
           hexChars(j * 2) = HexArray(v >>> 4)
-          hexChars(j * 2 + 1) = HexArray(v & 0x0F)
+          hexChars(j * 2 + 1) = HexArray(v & 0x0f)
           j += 1
         }
         new String(hexChars)
@@ -69,12 +66,11 @@ class SignedSecretVerifier(private val signingSecret: Secret)(implicit val logOf
         mac <- IO(Mac.getInstance(algorithm))
         _ <- IO(mac.init(secret))
         hashString: Array[Byte] <- IO(mac.doFinal(text.getBytes))
-      } yield s"v0=${ toHexString(hashString) }"
+      } yield s"v0=${toHexString(hashString)}"
 
     }
 
     Kleisli { req: Request[IO] =>
-
       OptionT(
         logOf.apply(SignedSecretVerifier.getClass)
           .flatMap(logger => {

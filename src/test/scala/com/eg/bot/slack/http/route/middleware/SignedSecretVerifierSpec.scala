@@ -87,9 +87,7 @@ class SignedSecretVerifierSpec extends AnyFlatSpec with Matchers {
     response.status shouldBe BadRequest
   }
 
-  private trait Scope
-    extends RoutesBaseScope
-      with TestImplicits {
+  private trait Scope extends RoutesBaseScope with TestImplicits {
 
     private val signedSecret = Secret("2ea6478998957958f8c4fe67d7180b97")
     private val regularRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
@@ -99,7 +97,8 @@ class SignedSecretVerifierSpec extends AnyFlatSpec with Matchers {
     }
     private val signedSecretVerifier =
       SignedSecretVerifier(signedSecret)
-    val requestBody = "token=04hu6pMLj0lscVDUGuAi6TQK&team_id=T01CETVRMDY&team_domain=sbteam-global&channel_id=C01CTH21LV7&channel_name=test&user_id=U01CTGZCX5X&user_name=sergeyqwertyborovskiy&command=%2Ffake_command&text=test&api_app_id=A01JU7WD7B9&is_enterprise_install=false&response_url=https%3A%2F%2Fhooks.slack.com%2Fcommands%2FT01CETVRMDY%2F1737525197124%2FeonRaBu6pVoPq795l81dm46y&trigger_id=1724583405350.1422947871474.e9f818804a7e4766df5ddb35fb854869"
+    val requestBody =
+      "token=04hu6pMLj0lscVDUGuAi6TQK&team_id=T01CETVRMDY&team_domain=sbteam-global&channel_id=C01CTH21LV7&channel_name=test&user_id=U01CTGZCX5X&user_name=sergeyqwertyborovskiy&command=%2Ffake_command&text=test&api_app_id=A01JU7WD7B9&is_enterprise_install=false&response_url=https%3A%2F%2Fhooks.slack.com%2Fcommands%2FT01CETVRMDY%2F1737525197124%2FeonRaBu6pVoPq795l81dm46y&trigger_id=1724583405350.1422947871474.e9f818804a7e4766df5ddb35fb854869"
     val wrappedRoutes = signedSecretVerifier.wrap(regularRoutes)
     val timestamp = TimeHelper.getTimestamp
 

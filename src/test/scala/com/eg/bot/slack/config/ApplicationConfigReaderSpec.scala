@@ -72,7 +72,7 @@ class ApplicationConfigReaderSpec extends AnyFlatSpec with Matchers with EitherV
 
   private trait Scope {
 
-    def read[T: pureconfig.ConfigReader](
+    def read[T : pureconfig.ConfigReader](
       configString: String,
     ): Either[ConfigReaderFailures, T] =
       ConfigSource

@@ -30,9 +30,11 @@ object ApplicationConfigReader {
           .map(SlackConfig(_))
 
       override def readApplicationConfig(implicit source: ConfigObjectSource): Result =
-        (readValidated[HttpServerConfig]("http.server"),
+        (
+          readValidated[HttpServerConfig]("http.server"),
           readValidated[HttpClientConfig]("http.client"),
-          readSlackConfig)
+          readSlackConfig
+        )
           .mapN(ApplicationConfig)
           .toEither
           .leftMap(nel => ConfigReaderException(nel.reduce))

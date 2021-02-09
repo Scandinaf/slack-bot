@@ -2,7 +2,7 @@ package com.eg.bot.slack.http.route
 
 import com.eg.bot.slack.TestImplicits
 import org.http4s.{Header, Headers, Method}
-import org.http4s.Status.{Ok, BadRequest}
+import org.http4s.Status.{BadRequest, Ok}
 import org.http4s.implicits._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -116,7 +116,8 @@ class CommandRoutesSpec extends AnyFlatSpec with Matchers {
 
   private trait Scope extends RoutesBaseScope with TestImplicits {
 
-    val requestBody = "token=04hu6pMLj0lscVDUGuAi6TQK&team_id=T01CETVRMDY&team_domain=sbteam-global&channel_id=C01CTH21LV7&channel_name=test&user_id=U01CTGZCX5X&user_name=sergeyqwertyborovskiy&command=%2Ffake_command&text=test&api_app_id=A01JU7WD7B9&is_enterprise_install=false&response_url=https%3A%2F%2Fhooks.slack.com%2Fcommands%2FT01CETVRMDY%2F1737525197124%2FeonRaBu6pVoPq795l81dm46y&trigger_id=1724583405350.1422947871474.e9f818804a7e4766df5ddb35fb854869"
+    val requestBody =
+      "token=04hu6pMLj0lscVDUGuAi6TQK&team_id=T01CETVRMDY&team_domain=sbteam-global&channel_id=C01CTH21LV7&channel_name=test&user_id=U01CTGZCX5X&user_name=sergeyqwertyborovskiy&command=%2Ffake_command&text=test&api_app_id=A01JU7WD7B9&is_enterprise_install=false&response_url=https%3A%2F%2Fhooks.slack.com%2Fcommands%2FT01CETVRMDY%2F1737525197124%2FeonRaBu6pVoPq795l81dm46y&trigger_id=1724583405350.1422947871474.e9f818804a7e4766df5ddb35fb854869"
     val regularRoutes = CommandRoutes()
 
   }

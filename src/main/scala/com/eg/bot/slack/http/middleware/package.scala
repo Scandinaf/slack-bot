@@ -6,8 +6,7 @@ package object middleware {
 
   object Exception {
 
-    sealed abstract class MiddlewareException(description: String)
-      extends HttpException(description)
+    sealed abstract class MiddlewareException(description: String) extends HttpException(description)
 
     object MiddlewareException {
 
