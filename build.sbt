@@ -27,6 +27,8 @@ lazy val root = project.in(file("."))
         Circe.core,
         Circe.parser,
         Circe.generic,
+        Circe.extras,
+        Enumeratum.core,
         pureConfig,
         typeSafeConfig,
         scalatest,

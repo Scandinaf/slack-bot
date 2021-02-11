@@ -11,7 +11,9 @@ object ApplicationRoutes {
   def apply(signedSecretVerifier: SignedSecretVerifier)(implicit logOf: LogOf[IO]): HttpRoutes[IO] =
     Router[IO](
       "/slack/command" ->
-        signedSecretVerifier.wrap(CommandRoutes())
+        signedSecretVerifier.wrap(CommandRoutes()),
+      "slack/event" ->
+        signedSecretVerifier.wrap(EventRoutes())
     )
 
 }

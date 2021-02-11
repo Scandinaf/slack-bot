@@ -37,6 +37,15 @@ object Dependencies {
     val core = "io.circe" %% "circe-core" % version
     val generic = "io.circe" %% "circe-generic" % version
     val parser = "io.circe" %% "circe-parser" % version
+    val extras = "io.circe" %% "circe-generic-extras" % version
+
+  }
+
+  object Enumeratum {
+
+    private val version = "1.6.1"
+
+    val core = "com.beachape" %% "enumeratum" % version
 
   }
 

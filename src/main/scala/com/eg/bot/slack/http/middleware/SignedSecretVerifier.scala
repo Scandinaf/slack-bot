@@ -66,7 +66,7 @@ class SignedSecretVerifier(private val signingSecret: Secret)(implicit val logOf
         mac <- IO(Mac.getInstance(algorithm))
         _ <- IO(mac.init(secret))
         hashString: Array[Byte] <- IO(mac.doFinal(text.getBytes))
-      } yield s"v0=${toHexString(hashString)}"
+      } yield s"v0=${ toHexString(hashString) }"
 
     }
 
@@ -96,13 +96,14 @@ class SignedSecretVerifier(private val signingSecret: Secret)(implicit val logOf
                   logger.error(
                     s"As part of the request signature verification, there were problems with the received request. Request - $req.",
                     error
-                  ) *> BadRequest(error.description).map(_.some)
+                  ) *> BadRequest()
+                    .map(_.some)
 
                 case NonFatal(error) =>
                   logger.error(
                     s"As part of the request signature verification, there were problems with the application. Request - $req.",
                     error
-                  ) *> InternalServerError("Something went wrong, contact the developers.")
+                  ) *> InternalServerError()
                     .map(_.some)
               }
           })
