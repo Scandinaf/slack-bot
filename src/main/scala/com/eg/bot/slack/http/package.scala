@@ -20,7 +20,7 @@ package object http {
   object ShowInstances {
 
     implicit val headerShow: Show[Header] =
-      (header: Header) => s"Header - ${ header.name }: ${ header.value }"
+      (header: Header) => s"Header - ${header.name}: ${header.value}"
 
   }
 
@@ -33,21 +33,18 @@ package object http {
           .get(CaseInsensitiveString(headerName))
           .toRight(HeaderNotFound(headerName))
 
-
       def asAccumulating[A](implicit decoder: Decoder[A]): IO[A] = for {
         bodyText <- req.bodyText.compile.string
         json <- IO.fromEither(
           parse(bodyText)
-            .leftMap(parsingFailure =>
-              MalformedMessageBodyFailure("Invalid JSON", parsingFailure.some)
-            )
+            .leftMap(parsingFailure => MalformedMessageBodyFailure("Invalid JSON", parsingFailure.some))
         )
         result <- IO.fromEither(
           decoder.decodeAccumulating(json.hcursor)
             .toEither
             .leftMap(nel =>
               InvalidMessageBodyFailure(
-                s"Could not decode JSON. Reasons - ${ nel.map(_.getMessage()).mkString_(";") }.",
+                s"Could not decode JSON. Reasons - ${nel.map(_.getMessage()).mkString_(";")}.",
                 None
               )
             )
@@ -75,7 +72,7 @@ package object http {
 
       final case class IncorrectHeaderValue(header: Header, expectedType: Class[_])
         extends HttpException(
-          show"The header contains incorrect value. $header, expectedType - ${ expectedType.getName }."
+          show"The header contains incorrect value. $header, expectedType - ${expectedType.getName}."
         )
 
     }
