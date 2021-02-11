@@ -10,7 +10,6 @@ import org.http4s.dsl.io._
 import org.http4s.headers.`Content-Type`
 import org.http4s.{HttpRoutes, MediaType, Response}
 
-
 object EventRoutes extends BaseRoutes {
 
   def apply()(implicit logOf: LogOf[IO]): HttpRoutes[IO] = {
@@ -24,9 +23,9 @@ object EventRoutes extends BaseRoutes {
               .map(_.withContentType(`Content-Type`(MediaType.application.`x-www-form-urlencoded`)))
 
         case callback: EventCallback => for {
-          _ <- logger.info(s"The event callback request received. Event Callback - $callback.")
-          response <- Ok()
-        } yield response
+            _ <- logger.info(s"The event callback request received. Event Callback - $callback.")
+            response <- Ok()
+          } yield response
 
       }
 

@@ -1,7 +1,7 @@
 package com.eg.bot.slack.http.route
 
 import com.eg.bot.slack.TestImplicits
-import org.http4s.Status.{Ok, BadRequest}
+import org.http4s.Status.{BadRequest, Ok}
 import org.http4s.headers.`Content-Type`
 import org.http4s.implicits._
 import org.http4s.{Header, Headers, MediaType, Method}
@@ -27,7 +27,9 @@ class EventRoutesSpec extends AnyFlatSpec with Matchers {
 
     response.status shouldBe Ok
     response.contentType shouldBe Some(`Content-Type`(MediaType.application.`x-www-form-urlencoded`))
-    response.as[String].unsafeRunSync() shouldBe "challenge=3eZbrw1aBm2rZgRNFdxV2595E9CY3gmdALWMmHkvFXO7tYXAYM8P"
+    response.as[
+      String
+    ].unsafeRunSync() shouldBe "challenge=3eZbrw1aBm2rZgRNFdxV2595E9CY3gmdALWMmHkvFXO7tYXAYM8P"
   }
 
   it should "return BadRequest for the incorrect url_verification request #1" in new Scope {

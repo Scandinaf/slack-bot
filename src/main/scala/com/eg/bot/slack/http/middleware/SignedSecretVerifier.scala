@@ -66,7 +66,7 @@ class SignedSecretVerifier(private val signingSecret: Secret)(implicit val logOf
         mac <- IO(Mac.getInstance(algorithm))
         _ <- IO(mac.init(secret))
         hashString: Array[Byte] <- IO(mac.doFinal(text.getBytes))
-      } yield s"v0=${ toHexString(hashString) }"
+      } yield s"v0=${toHexString(hashString)}"
 
     }
 

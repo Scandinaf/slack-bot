@@ -63,7 +63,6 @@ package object http {
 
   object Codec {
 
-
     implicit val slackEventDecoder: Decoder[SlackEvent] = {
 
       implicit val configuration: Configuration =
@@ -74,9 +73,9 @@ package object http {
       implicit val tokenDecoder: Decoder[SlackEvent.Token] = deriveUnwrappedDecoder
       implicit val urlVerificationDecoder: Decoder[UrlVerification] = deriveConfiguredDecoder[UrlVerification]
 
-
       implicit val userIdDecoder: Decoder[EventCallback.UserId] = deriveUnwrappedDecoder
-      implicit val enterpriseIdDecoder: Decoder[EventCallback.Authorization.EnterpriseId] = deriveUnwrappedDecoder
+      implicit val enterpriseIdDecoder: Decoder[EventCallback.Authorization.EnterpriseId] =
+        deriveUnwrappedDecoder
       implicit val teamIdDecoder: Decoder[EventCallback.Authorization.TeamId] = deriveUnwrappedDecoder
       implicit val channelDecoder: Decoder[EventCallback.Event.Channel] = deriveUnwrappedDecoder
       implicit val textDecoder: Decoder[EventCallback.Event.Text] = deriveUnwrappedDecoder
@@ -86,15 +85,17 @@ package object http {
             .map(_.toLong)
             .map(EventCallback.Event.Timestamp(_))
             .toRight("Failed to parse passed value")
-      )
+        )
 
       implicit val subTypeDecoder: Decoder[EventCallback.Event.SubType] =
         deriveEnumerationDecoder[EventCallback.Event.SubType]
       implicit val editInformationDecoder: Decoder[EventCallback.Event.EditInformation] =
         deriveConfiguredDecoder[EventCallback.Event.EditInformation]
-      implicit val message: Decoder[EventCallback.Event.Message] = deriveConfiguredDecoder[EventCallback.Event.Message]
+      implicit val message: Decoder[EventCallback.Event.Message] =
+        deriveConfiguredDecoder[EventCallback.Event.Message]
       implicit val event: Decoder[EventCallback.Event] = deriveConfiguredDecoder[EventCallback.Event]
-      implicit val authorizationDecoder: Decoder[EventCallback.Authorization] = deriveConfiguredDecoder[EventCallback.Authorization]
+      implicit val authorizationDecoder: Decoder[EventCallback.Authorization] =
+        deriveConfiguredDecoder[EventCallback.Authorization]
       implicit val eventCallbackDecoder: Decoder[EventCallback] = deriveConfiguredDecoder[EventCallback]
 
       deriveConfiguredDecoder[SlackEvent]
