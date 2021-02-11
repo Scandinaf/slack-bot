@@ -102,6 +102,22 @@ class EventRoutesSpec extends AnyFlatSpec with Matchers {
     response.status shouldBe BadRequest
   }
 
+  it should "return BadRequest for the incorrect url_verification request #5" in new Scope {
+    val response =
+      sendRequest(
+        uri = uri"/",
+        method = Method.POST,
+        headers = Headers(
+          List(
+            Header("Content-Type", "application/json")
+          )
+        ),
+        routes = regularRoutes
+      ).unsafeRunSync()
+
+    response.status shouldBe BadRequest
+  }
+
   it should "return BadRequest for the request with incorrect type" in new Scope {
     val response =
       sendRequestWithBody(
@@ -127,7 +143,7 @@ class EventRoutesSpec extends AnyFlatSpec with Matchers {
         method = Method.POST,
         headers = Headers(
           List(
-            Header("Content-Type", "application/json")
+            Header("Content-Type", "application/xml")
           )
         ),
         routes = regularRoutes,
@@ -225,6 +241,22 @@ class EventRoutesSpec extends AnyFlatSpec with Matchers {
             |         "is_bot": "fake_boolean"
             |         },
             |"type": "event_callback"}""".stripMargin
+      ).unsafeRunSync()
+
+    response.status shouldBe BadRequest
+  }
+
+  it should "return BadRequest for the incorrect event_callback request #3" in new Scope {
+    val response =
+      sendRequest(
+        uri = uri"/",
+        method = Method.POST,
+        headers = Headers(
+          List(
+            Header("Content-Type", "application/json")
+          )
+        ),
+        routes = regularRoutes,
       ).unsafeRunSync()
 
     response.status shouldBe BadRequest

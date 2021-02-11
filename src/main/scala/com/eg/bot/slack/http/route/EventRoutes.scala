@@ -1,6 +1,7 @@
 package com.eg.bot.slack.http.route
 
 import cats.effect.IO
+import com.eg.bot.slack.http.CompanionObject.RequestCompanion
 import com.eg.bot.slack.http.Codec._
 import com.eg.bot.slack.http.route.model.SlackEvent
 import com.eg.bot.slack.http.route.model.SlackEvent.{EventCallback, UrlVerification}
@@ -36,7 +37,7 @@ object EventRoutes extends BaseRoutes {
           .flatMap(implicit logger => {
 
             (for {
-              slackEvent <- req.as[SlackEvent]
+              slackEvent <- req.asAccumulating[SlackEvent]
               response <- handleSlackEvent(slackEvent)
             } yield response)
               .handleErrorWith(routeHandleErrorWith(req))

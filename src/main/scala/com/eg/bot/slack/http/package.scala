@@ -9,8 +9,8 @@ import com.eg.bot.slack.http.route.model.{Command, SlackEvent}
 import io.circe.Decoder
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.semiauto._
+import io.circe.parser._
 import org.http4s._
-import org.http4s.circe._
 import org.http4s.util.CaseInsensitiveString
 import cats.data.EitherT
 import com.eg.bot.slack.http.ShowInstances._
@@ -20,7 +20,7 @@ package object http {
   object ShowInstances {
 
     implicit val headerShow: Show[Header] =
-      (header: Header) => s"Header - ${header.name}: ${header.value}"
+      (header: Header) => s"Header - ${ header.name }: ${ header.value }"
 
   }
 
@@ -32,6 +32,27 @@ package object http {
         req.headers
           .get(CaseInsensitiveString(headerName))
           .toRight(HeaderNotFound(headerName))
+
+
+      def asAccumulating[A](implicit decoder: Decoder[A]): IO[A] = for {
+        bodyText <- req.bodyText.compile.string
+        json <- IO.fromEither(
+          parse(bodyText)
+            .leftMap(parsingFailure =>
+              MalformedMessageBodyFailure("Invalid JSON", parsingFailure.some)
+            )
+        )
+        result <- IO.fromEither(
+          decoder.decodeAccumulating(json.hcursor)
+            .toEither
+            .leftMap(nel =>
+              InvalidMessageBodyFailure(
+                s"Could not decode JSON. Reasons - ${ nel.map(_.getMessage()).mkString_(";") }.",
+                None
+              )
+            )
+        )
+      } yield result
 
     }
 
@@ -54,7 +75,7 @@ package object http {
 
       final case class IncorrectHeaderValue(header: Header, expectedType: Class[_])
         extends HttpException(
-          show"The header contains incorrect value. $header, expectedType - ${expectedType.getName}."
+          show"The header contains incorrect value. $header, expectedType - ${ expectedType.getName }."
         )
 
     }
@@ -102,7 +123,6 @@ package object http {
 
     }
 
-    implicit val slackEventEntityDecoder = jsonOf[IO, SlackEvent]
     implicit val commandEntityDecoder: EntityDecoder[IO, Command] =
       EntityDecoder[IO, UrlForm]
         .flatMapR(urlForm =>
