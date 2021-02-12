@@ -109,7 +109,8 @@ package object http {
       implicit val textDecoder: Decoder[EventCallback.Event.Message.Text] = deriveUnwrappedDecoder
       implicit val editInformationDecoder: Decoder[EventCallback.Event.Message.EditInformation] =
         deriveConfiguredDecoder
-      implicit val embeddedRegularMessageDecoder: Decoder[EventCallback.Event.Message.EmbeddedMessage.RegularMessage] =
+      implicit val embeddedRegularMessageDecoder
+        : Decoder[EventCallback.Event.Message.EmbeddedMessage.RegularMessage] =
         deriveConfiguredDecoder
       implicit val embeddedMeMessageDecoder: Decoder[EventCallback.Event.Message.EmbeddedMessage.MeMessage] =
         deriveConfiguredDecoder
