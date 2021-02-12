@@ -22,14 +22,14 @@ object SlackEvent {
   final case class EventCallback(
     token: Token,
     event: EventCallback.Event,
-    authorizations: EventCallback.Authorization
+    authorizations: List[EventCallback.Authorization]
   ) extends SlackEvent
 
   object EventCallback {
 
     final case class UserId(value: String) extends AnyVal
     final case class Authorization(
-      enterpriseId: EnterpriseId,
+      enterpriseId: Option[EnterpriseId],
       teamId: TeamId,
       userId: UserId,
       isBot: Boolean

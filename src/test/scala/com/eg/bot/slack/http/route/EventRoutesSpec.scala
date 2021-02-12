@@ -161,12 +161,12 @@ class EventRoutesSpec extends AnyFlatSpec with Matchers {
             |		        "ts": "1355517536.000001"
             |	        }
             |},
-            |"authorizations": {
+            |"authorizations": [{
             |         "enterprise_id": "E12345",
             |         "team_id": "T12345",
             |         "user_id": "U12345",
             |         "is_bot": false
-            |         },
+            |         }],
             |"type": "event_callback"}""".stripMargin
       ).unsafeRunSync()
 
@@ -197,12 +197,12 @@ class EventRoutesSpec extends AnyFlatSpec with Matchers {
             |		        "ts": "1355517536.000001"
             |	        }
             |},
-            |"authorizations": {
+            |"authorizations": [{
             |         "enterprise_id": "E12345",
             |         "team_id": "T12345",
             |         "user_id": "U12345",
             |         "is_bot": "fake_boolean"
-            |         },
+            |         }],
             |"type": "event_callback"}""".stripMargin
       ).unsafeRunSync()
 
@@ -234,12 +234,12 @@ class EventRoutesSpec extends AnyFlatSpec with Matchers {
             |		        "ts": "fake_ts"
             |	        }
             |},
-            |"authorizations": {
+            |"authorizations": [{
             |         "enterprise_id": "E12345",
             |         "team_id": "T12345",
             |         "user_id": "U12345",
             |         "is_bot": "fake_boolean"
-            |         },
+            |         }],
             |"type": "event_callback"}""".stripMargin
       ).unsafeRunSync()
 
