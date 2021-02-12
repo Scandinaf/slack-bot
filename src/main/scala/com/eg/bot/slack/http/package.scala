@@ -83,20 +83,22 @@ package object http {
 
     implicit val slackEventDecoder: Decoder[SlackEvent] = {
 
+      val discriminator = "type"
       implicit val configuration: Configuration =
         Configuration.default
           .withSnakeCaseConstructorNames
           .withSnakeCaseMemberNames
-          .withDiscriminator("type")
+          .withDiscriminator(discriminator)
       implicit val tokenDecoder: Decoder[SlackEvent.Token] = deriveUnwrappedDecoder
-      implicit val urlVerificationDecoder: Decoder[UrlVerification] = deriveConfiguredDecoder[UrlVerification]
+      implicit val urlVerificationDecoder: Decoder[UrlVerification] = deriveConfiguredDecoder
 
       implicit val userIdDecoder: Decoder[EventCallback.UserId] = deriveUnwrappedDecoder
+      implicit val teamIdDecoder: Decoder[EventCallback.TeamId] = deriveUnwrappedDecoder
       implicit val enterpriseIdDecoder: Decoder[EventCallback.Authorization.EnterpriseId] =
         deriveUnwrappedDecoder
-      implicit val teamIdDecoder: Decoder[EventCallback.Authorization.TeamId] = deriveUnwrappedDecoder
+      implicit val authorizationDecoder: Decoder[EventCallback.Authorization] =
+        deriveConfiguredDecoder
       implicit val channelDecoder: Decoder[EventCallback.Event.Channel] = deriveUnwrappedDecoder
-      implicit val textDecoder: Decoder[EventCallback.Event.Text] = deriveUnwrappedDecoder
       implicit val timestampDecoder: Decoder[EventCallback.Event.Timestamp] =
         Decoder.decodeString.emap(
           _.toDoubleOption
@@ -104,17 +106,76 @@ package object http {
             .map(EventCallback.Event.Timestamp(_))
             .toRight("Failed to parse passed value")
         )
+      implicit val textDecoder: Decoder[EventCallback.Event.Message.Text] = deriveUnwrappedDecoder
+      implicit val editInformationDecoder: Decoder[EventCallback.Event.Message.EditInformation] =
+        deriveConfiguredDecoder
+      implicit val embeddedRegularMessageDecoder: Decoder[EventCallback.Event.Message.EmbeddedMessage.RegularMessage] =
+        deriveConfiguredDecoder
+      implicit val embeddedMeMessageDecoder: Decoder[EventCallback.Event.Message.EmbeddedMessage.MeMessage] =
+        deriveConfiguredDecoder
+      implicit val embeddedMessageDecoder: Decoder[EventCallback.Event.Message.EmbeddedMessage] = {
 
-      implicit val subTypeDecoder: Decoder[EventCallback.Event.SubType] =
-        deriveEnumerationDecoder[EventCallback.Event.SubType]
-      implicit val editInformationDecoder: Decoder[EventCallback.Event.EditInformation] =
-        deriveConfiguredDecoder[EventCallback.Event.EditInformation]
-      implicit val message: Decoder[EventCallback.Event.Message] =
-        deriveConfiguredDecoder[EventCallback.Event.Message]
-      implicit val event: Decoder[EventCallback.Event] = deriveConfiguredDecoder[EventCallback.Event]
-      implicit val authorizationDecoder: Decoder[EventCallback.Authorization] =
-        deriveConfiguredDecoder[EventCallback.Authorization]
-      implicit val eventCallbackDecoder: Decoder[EventCallback] = deriveConfiguredDecoder[EventCallback]
+        val discriminator = "subtype"
+        implicit val configuration: Configuration =
+          Configuration.default
+            .withSnakeCaseConstructorNames
+            .withSnakeCaseMemberNames
+            .withDiscriminator(discriminator)
+
+        val embeddedRegularMessageWidenDecoder: Decoder[EventCallback.Event.Message.EmbeddedMessage] =
+          embeddedRegularMessageDecoder.widen
+        val embeddedMessageDecoder: Decoder[EventCallback.Event.Message.EmbeddedMessage] =
+          deriveConfiguredDecoder
+
+        Decoder.decodeJsonObject.flatMap(jsonObj =>
+          if (jsonObj.contains(discriminator)) embeddedMessageDecoder
+          else embeddedRegularMessageWidenDecoder
+        )
+
+      }
+      implicit val regularMessageDecoder: Decoder[EventCallback.Event.Message.RegularMessage] =
+        deriveConfiguredDecoder
+      implicit val changedMessageDecoder: Decoder[EventCallback.Event.Message.MessageChanged] =
+        deriveConfiguredDecoder
+      implicit val meMessageDecoder: Decoder[EventCallback.Event.Message.MeMessage] =
+        deriveConfiguredDecoder
+
+      implicit val deletedMessageDecoder: Decoder[EventCallback.Event.Message.MessageDeleted] =
+        deriveConfiguredDecoder
+      implicit val messageDecoder: Decoder[EventCallback.Event.Message] = {
+
+        val discriminator = "subtype"
+        implicit val configuration: Configuration =
+          Configuration.default
+            .withSnakeCaseConstructorNames
+            .withSnakeCaseMemberNames
+            .withDiscriminator(discriminator)
+
+        val regularMessageWidenDecoder: Decoder[EventCallback.Event.Message] = regularMessageDecoder.widen
+        val messageDecoder: Decoder[EventCallback.Event.Message] = deriveConfiguredDecoder
+
+        Decoder.decodeJsonObject.flatMap(jsonObj =>
+          if (jsonObj.contains(discriminator)) messageDecoder
+          else regularMessageWidenDecoder
+        )
+
+      }
+      implicit val eventDecoder: Decoder[EventCallback.Event] = {
+
+        val eventDecoder: Decoder[EventCallback.Event] = deriveConfiguredDecoder
+        val messageWidenDecoder: Decoder[EventCallback.Event] = messageDecoder.widen
+
+        Decoder.decodeJsonObject
+          .emap(_(discriminator)
+            .toRight(s"The field '$discriminator' is required")
+            .flatMap(_.asString
+              .toRight(s"The field '$discriminator' must be of the string type"))).flatMap {
+            case "message" => messageWidenDecoder
+            case _         => eventDecoder
+          }
+
+      }
+      implicit val eventCallbackDecoder: Decoder[EventCallback] = deriveConfiguredDecoder
 
       deriveConfiguredDecoder[SlackEvent]
 

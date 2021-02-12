@@ -1,12 +1,8 @@
 package com.eg.bot.slack.http.route.model
 
-import com.eg.bot.slack.http.route.model.SlackEvent.EventCallback.Authorization.{EnterpriseId, TeamId}
-import com.eg.bot.slack.http.route.model.SlackEvent.Token
-import enumeratum._
-
 sealed trait SlackEvent {
 
-  def token: Token
+  def token: SlackEvent.Token
 
 }
 
@@ -15,12 +11,12 @@ object SlackEvent {
   final case class Token(value: String) extends AnyVal
 
   final case class UrlVerification(
-    token: Token,
+    token: SlackEvent.Token,
     challenge: String
   ) extends SlackEvent
 
   final case class EventCallback(
-    token: Token,
+    token: SlackEvent.Token,
     event: EventCallback.Event,
     authorizations: List[EventCallback.Authorization]
   ) extends SlackEvent
@@ -28,8 +24,10 @@ object SlackEvent {
   object EventCallback {
 
     final case class UserId(value: String) extends AnyVal
+    final case class TeamId(value: String) extends AnyVal
+
     final case class Authorization(
-      enterpriseId: Option[EnterpriseId],
+      enterpriseId: Option[Authorization.EnterpriseId],
       teamId: TeamId,
       userId: UserId,
       isBot: Boolean
@@ -38,7 +36,6 @@ object SlackEvent {
     object Authorization {
 
       final case class EnterpriseId(value: String) extends AnyVal
-      final case class TeamId(value: String) extends AnyVal
 
     }
 
@@ -46,33 +43,66 @@ object SlackEvent {
 
     object Event {
 
-      final case class Channel(value: String) extends AnyVal
-      final case class Text(value: String) extends AnyVal
       final case class Timestamp(value: Long) extends AnyVal
-      final case class EditInformation(user: UserId, ts: Timestamp)
+      final case class Channel(value: String) extends AnyVal
 
-      sealed trait SubType extends EnumEntry
+      sealed trait Message extends EventCallback.Event
 
-      object SubType extends Enum[SubType] {
+      object Message {
 
-        val values = findValues
+        final case class Text(value: String) extends AnyVal
+        final case class EditInformation(user: UserId, ts: Timestamp)
 
-        case object BotMessage extends SubType
-        case object MeMessage extends SubType
-        case object MessageChanged extends SubType
-        case object MessageDeleted extends SubType
-        case object MessageReplied extends SubType
+        final case class RegularMessage(
+          text: Text,
+          user: UserId,
+          ts: Timestamp,
+          team: TeamId,
+          channel: Channel
+        ) extends Message
+
+        final case class MessageChanged(
+          channel: Channel,
+          ts: Timestamp,
+          previousMessage: EmbeddedMessage,
+          message: EmbeddedMessage
+        ) extends Message
+
+        final case class MeMessage(
+          text: Text,
+          user: UserId,
+          ts: Timestamp,
+          channel: Channel
+        ) extends Message
+
+        final case class MessageDeleted(
+          ts: Timestamp,
+          channel: Channel,
+          previousMessage: EmbeddedMessage,
+        ) extends Message
+
+        sealed trait EmbeddedMessage
+
+        object EmbeddedMessage {
+
+          final case class RegularMessage(
+            text: Text,
+            user: UserId,
+            ts: Timestamp,
+            team: TeamId,
+            edited: Option[EditInformation]
+          ) extends EmbeddedMessage
+
+          final case class MeMessage(
+            text: Text,
+            user: UserId,
+            ts: Timestamp,
+            edited: Option[EditInformation]
+          ) extends EmbeddedMessage
+
+        }
 
       }
-
-      final case class Message(
-        channel: Channel,
-        user: UserId,
-        text: Text,
-        ts: Timestamp,
-        subtype: Option[SubType],
-        edited: Option[EditInformation]
-      ) extends EventCallback.Event
 
     }
 

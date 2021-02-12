@@ -136,7 +136,7 @@ class EventRoutesSpec extends AnyFlatSpec with Matchers {
     response.status shouldBe BadRequest
   }
 
-  it should "return Ok for the correct event_callback request" in new Scope {
+  it should "return Ok for the correct event_callback request #1" in new Scope {
     val response =
       sendRequestWithBody(
         uri = uri"/",
@@ -155,11 +155,56 @@ class EventRoutesSpec extends AnyFlatSpec with Matchers {
             |	        "user": "U2147483697",
             |	        "text": "Hello, world!",
             |	        "ts": "1355517523.000005",
-            |         "subtype": "bot_message",
-            |	        "edited": {
-            |		        "user": "U2147483697",
-            |		        "ts": "1355517536.000001"
-            |	        }
+            |         "team":"T01CETVRMDY"
+            |},
+            |"authorizations": [{
+            |         "enterprise_id": "E12345",
+            |         "team_id": "T12345",
+            |         "user_id": "U12345",
+            |         "is_bot": false
+            |         }],
+            |"type": "event_callback"}""".stripMargin
+      ).unsafeRunSync()
+
+    response.status shouldBe Ok
+  }
+
+  it should "return Ok for the correct event_callback request #2" in new Scope {
+    val response =
+      sendRequestWithBody(
+        uri = uri"/",
+        method = Method.POST,
+        headers = Headers(
+          List(
+            Header("Content-Type", "application/json")
+          )
+        ),
+        routes = regularRoutes,
+        body =
+          """{"token": "Jhj5dZrVaK7ZwHHjRyZWjbDl",
+            |"event": {
+            |	        "type": "message",
+            |         "subtype": "message_changed",
+            |	        "channel": "C2147483705",
+            |	        "ts": "1355517523.000005",
+            |         "previous_message": {
+            |         "type":"message",
+            |         "text":"Hello World",
+            |         "user":"U01CTGZCX5X",
+            |         "ts":"1613124306.000600",
+            |         "team":"T01CETVRMDY"
+            |         },
+            |         "message": {
+            |         "type":"message",
+            |         "text":"Hello World!!!",
+            |         "user":"U01CTGZCX5X",
+            |         "ts":"1613124306.000600",
+            |         "team":"T01CETVRMDY",
+            |         "edited": {
+            |            "user":"U01CTGZCX5X",
+            |            "ts":"1613124345.000000"
+            |         }
+            |         }
             |},
             |"authorizations": [{
             |         "enterprise_id": "E12345",
@@ -191,11 +236,7 @@ class EventRoutesSpec extends AnyFlatSpec with Matchers {
             |	        "channel": "C2147483705",
             |	        "user": "U2147483697",
             |	        "text": "Hello, world!",
-            |	        "ts": "1355517523.000005",
-            |	        "edited": {
-            |		        "user": "U2147483697",
-            |		        "ts": "1355517536.000001"
-            |	        }
+            |	        "ts": "1355517523.000005"
             |},
             |"authorizations": [{
             |         "enterprise_id": "E12345",
@@ -228,11 +269,7 @@ class EventRoutesSpec extends AnyFlatSpec with Matchers {
             |	        "user": "U2147483697",
             |	        "text": "Hello, world!",
             |	        "ts": "fake_ts",
-            |         "subtype": "fake_subtype",
-            |	        "edited": {
-            |		        "user": "U2147483697",
-            |		        "ts": "fake_ts"
-            |	        }
+            |         "subtype": "fake_subtype"
             |},
             |"authorizations": [{
             |         "enterprise_id": "E12345",
@@ -257,6 +294,67 @@ class EventRoutesSpec extends AnyFlatSpec with Matchers {
           )
         ),
         routes = regularRoutes,
+      ).unsafeRunSync()
+
+    response.status shouldBe BadRequest
+  }
+
+  it should "return BadRequest for the incorrect event_callback request #4" in new Scope {
+    val response =
+      sendRequestWithBody(
+        uri = uri"/",
+        method = Method.POST,
+        headers = Headers(
+          List(
+            Header("Content-Type", "application/json")
+          )
+        ),
+        routes = regularRoutes,
+        body =
+          """{"token": "Jhj5dZrVaK7ZwHHjRyZWjbDl",
+            |"event": {
+            |         "subtype": "message_changed"
+            |         },
+            |"authorizations": [{
+            |         "enterprise_id": "E12345",
+            |         "team_id": "T12345",
+            |         "user_id": "U12345",
+            |         "is_bot": false
+            |         }],
+            |"type": "event_callback"}""".stripMargin
+      ).unsafeRunSync()
+
+    response.status shouldBe BadRequest
+  }
+
+  it should "return BadRequest for the incorrect event_callback request #5" in new Scope {
+    val response =
+      sendRequestWithBody(
+        uri = uri"/",
+        method = Method.POST,
+        headers = Headers(
+          List(
+            Header("Content-Type", "application/json")
+          )
+        ),
+        routes = regularRoutes,
+        body =
+          """{"token": "Jhj5dZrVaK7ZwHHjRyZWjbDl",
+            |"event": {
+            |"type": "fake_type",
+            |"channel": "C2147483705",
+            |"user": "U2147483697",
+            |"text": "Hello, world!",
+            |"ts": "1355517523.000005",
+            |"team":"T01CETVRMDY"
+            |},
+            |"authorizations": [{
+            |         "enterprise_id": "E12345",
+            |         "team_id": "T12345",
+            |         "user_id": "U12345",
+            |         "is_bot": false
+            |         }],
+            |"type": "event_callback"}""".stripMargin
       ).unsafeRunSync()
 
     response.status shouldBe BadRequest
