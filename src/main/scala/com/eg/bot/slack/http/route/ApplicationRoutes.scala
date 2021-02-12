@@ -10,8 +10,12 @@ import cats.syntax.option._
 
 object ApplicationRoutes {
 
-  def apply(signedSecretVerifier: SignedSecretVerifier)(implicit logOf: LogOf[IO], concurrent: Concurrent[IO]): HttpRoutes[IO] =
-
+  def apply(
+    signedSecretVerifier: SignedSecretVerifier
+  )(implicit
+    logOf: LogOf[IO],
+    concurrent: Concurrent[IO]
+  ): HttpRoutes[IO] =
     Logger.httpRoutes(
       logHeaders = true,
       logBody = true,
@@ -19,7 +23,7 @@ object ApplicationRoutes {
         (logMsg: String) =>
           logOf.apply(ApplicationRoutes.getClass)
             .flatMap(_.info(logMsg))
-        ).some
+      ).some
     )(
       signedSecretVerifier.wrap(
         Router[IO](
