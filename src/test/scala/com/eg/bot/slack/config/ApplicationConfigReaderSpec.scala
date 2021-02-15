@@ -1,6 +1,6 @@
 package com.eg.bot.slack.config
 
-import com.eg.bot.slack.config.model.{HttpClientConfig, HttpServerConfig, SlackConfig}
+import com.eg.bot.slack.config.model.{HttpClientConfig, HttpServerConfig, Secret, SlackConfig}
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -9,7 +9,8 @@ import pureconfig.error.ConfigReaderFailures
 import pureconfig.generic.auto._
 import com.eg.bot.slack.config.Codec._
 import com.eg.bot.slack.config.Hint.camelCaseHint
-import com.eg.bot.slack.config.model.Secret
+import com.eg.bot.slack.http.service.InteractionQueue
+import org.http4s.Uri
 
 import scala.concurrent.duration._
 
@@ -55,19 +56,58 @@ class ApplicationConfigReaderSpec extends AnyFlatSpec with Matchers with EitherV
 
   }
 
-  it should "correctly parse configuration for SlackConfig.SecurityConfig" in new Scope {
+  it should "correctly parse configuration for SlackConfig" in new Scope {
 
     val config =
-      """{
-            field {
-              signingSecret = "2ea6478998957958f8c4fe67d7180b97"
+      """field {
+            client {
+              baseUri = "https://slack.com/api/"
+              security {
+                token = "xoxb-1422947871474-1648276662614-oILq1oHCgsRQ6l3lOOAkcfLf"
+              }
+            }
+            server {
+              security {
+                signingSecret = "2ea6478998957958f8c4fe67d7180b97"
+              }
+            }
+            queue {
+              maxConcurrent = 3
             }
           }""".stripMargin
-    val securityConfig = read[SlackConfig.SecurityConfig](config).value
+    val slackConfig = read[SlackConfig](config).value
 
-    securityConfig shouldBe a[SlackConfig.SecurityConfig]
-    securityConfig.signingSecret shouldBe Secret("2ea6478998957958f8c4fe67d7180b97")
+    slackConfig shouldBe a[SlackConfig]
+    slackConfig.client shouldBe SlackConfig.Client(
+      Uri.unsafeFromString("https://slack.com/api/"),
+      SlackConfig.Client.SecurityConfig(
+        Secret("xoxb-1422947871474-1648276662614-oILq1oHCgsRQ6l3lOOAkcfLf")
+      )
+    )
+    slackConfig.server shouldBe SlackConfig.Server(
+      SlackConfig.Server.SecurityConfig(
+        Secret("2ea6478998957958f8c4fe67d7180b97")
+      )
+    )
+    slackConfig.queue shouldBe InteractionQueue.Config(3)
 
+  }
+
+  it should "correctly parse configuration for Uri" in new Scope {
+    val config =
+      """field = "https://slack.com/api/""""
+    val uri = read[Uri](config).value
+
+    uri shouldBe a[Uri]
+    uri shouldBe Uri.unsafeFromString("https://slack.com/api/")
+  }
+
+  it should "correctly notify about incorrect configuration for Uri" in new Scope {
+    val config =
+      """field = "fake_protocol://slack.com/api/""""
+    val uri = read[Uri](config).left.value
+
+    uri shouldBe a[ConfigReaderFailures]
   }
 
   private trait Scope {

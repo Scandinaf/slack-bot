@@ -4,13 +4,16 @@ import cats.Show
 import cats.effect.IO
 import cats.implicits._
 import com.eg.bot.slack.http.Exception.HttpException.HeaderNotFound
+import com.eg.bot.slack.http.model.{Channel, Text}
 import com.eg.bot.slack.http.route.model.SlackEvent.{EventCallback, UrlVerification}
 import com.eg.bot.slack.http.route.model.{Command, SlackEvent}
-import io.circe.Decoder
+import com.eg.bot.slack.http.service.model.PostMessage
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.semiauto._
 import io.circe.parser._
+import io.circe.{Codec, Decoder, Encoder}
 import org.http4s._
+import org.http4s.circe.jsonEncoderOf
 import org.http4s.util.CaseInsensitiveString
 import cats.data.EitherT
 import com.eg.bot.slack.http.ShowInstances._
@@ -81,14 +84,17 @@ package object http {
 
   object Codec {
 
+    implicit val configuration: Configuration =
+      Configuration
+        .default
+        .withSnakeCaseMemberNames
+        .withSnakeCaseConstructorNames
+    implicit val channelCodec: Codec[Channel] = deriveUnwrappedCodec
+    implicit val textCodec: Codec[Text] = deriveUnwrappedCodec
     implicit val slackEventDecoder: Decoder[SlackEvent] = {
 
       val discriminator = "type"
-      implicit val configuration: Configuration =
-        Configuration.default
-          .withSnakeCaseConstructorNames
-          .withSnakeCaseMemberNames
-          .withDiscriminator(discriminator)
+      implicit val configuration: Configuration = Codec.configuration.withDiscriminator(discriminator)
       implicit val tokenDecoder: Decoder[SlackEvent.Token] = deriveUnwrappedDecoder
       implicit val urlVerificationDecoder: Decoder[UrlVerification] = deriveConfiguredDecoder
 
@@ -98,7 +104,6 @@ package object http {
         deriveUnwrappedDecoder
       implicit val authorizationDecoder: Decoder[EventCallback.Authorization] =
         deriveConfiguredDecoder
-      implicit val channelDecoder: Decoder[EventCallback.Event.Channel] = deriveUnwrappedDecoder
       implicit val timestampDecoder: Decoder[EventCallback.Event.Timestamp] =
         Decoder.decodeString.emap(
           _.toDoubleOption
@@ -106,7 +111,6 @@ package object http {
             .map(EventCallback.Event.Timestamp(_))
             .toRight("Failed to parse passed value")
         )
-      implicit val textDecoder: Decoder[EventCallback.Event.Message.Text] = deriveUnwrappedDecoder
       implicit val editInformationDecoder: Decoder[EventCallback.Event.Message.EditInformation] =
         deriveConfiguredDecoder
       implicit val embeddedRegularMessageDecoder
@@ -117,11 +121,7 @@ package object http {
       implicit val embeddedMessageDecoder: Decoder[EventCallback.Event.Message.EmbeddedMessage] = {
 
         val discriminator = "subtype"
-        implicit val configuration: Configuration =
-          Configuration.default
-            .withSnakeCaseConstructorNames
-            .withSnakeCaseMemberNames
-            .withDiscriminator(discriminator)
+        implicit val configuration: Configuration = Codec.configuration.withDiscriminator(discriminator)
 
         val embeddedRegularMessageWidenDecoder: Decoder[EventCallback.Event.Message.EmbeddedMessage] =
           embeddedRegularMessageDecoder.widen
@@ -146,11 +146,7 @@ package object http {
       implicit val messageDecoder: Decoder[EventCallback.Event.Message] = {
 
         val discriminator = "subtype"
-        implicit val configuration: Configuration =
-          Configuration.default
-            .withSnakeCaseConstructorNames
-            .withSnakeCaseMemberNames
-            .withDiscriminator(discriminator)
+        implicit val configuration: Configuration = Codec.configuration.withDiscriminator(discriminator)
 
         val regularMessageWidenDecoder: Decoder[EventCallback.Event.Message] = regularMessageDecoder.widen
         val messageDecoder: Decoder[EventCallback.Event.Message] = deriveConfiguredDecoder
@@ -203,6 +199,9 @@ package object http {
             } yield Command(command, text))
           )
         )
+
+    implicit val postMessageEncoder: Encoder[PostMessage] = deriveConfiguredEncoder
+    implicit val postMessageEntityEncoder: EntityEncoder[IO, PostMessage] = jsonEncoderOf
 
   }
 

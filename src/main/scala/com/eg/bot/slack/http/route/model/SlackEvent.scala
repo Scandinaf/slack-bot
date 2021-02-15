@@ -1,5 +1,7 @@
 package com.eg.bot.slack.http.route.model
 
+import com.eg.bot.slack.http.model.{Channel, Text}
+
 sealed trait SlackEvent {
 
   def token: SlackEvent.Token
@@ -44,13 +46,11 @@ object SlackEvent {
     object Event {
 
       final case class Timestamp(value: Long) extends AnyVal
-      final case class Channel(value: String) extends AnyVal
 
       sealed trait Message extends EventCallback.Event
 
       object Message {
 
-        final case class Text(value: String) extends AnyVal
         final case class EditInformation(user: UserId, ts: Timestamp)
 
         final case class RegularMessage(

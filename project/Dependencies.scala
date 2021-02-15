@@ -55,6 +55,7 @@ object Dependencies {
   val slf4j = "org.slf4j" % "slf4j-api" % "2.0.0-alpha1"
   val logbackClassic = "ch.qos.logback" % "logback-classic" % "1.3.0-alpha5"
 
-  val scalatest = "org.scalatest" %% "scalatest" % "3.3.0-SNAP3" % "test"
+  val scalatest = "org.scalatest" %% "scalatest" % "3.3.0-SNAP3" % Test
+  val mockito = "org.mockito" %% "mockito-scala-scalatest" % "1.16.3" % Test
 
 }

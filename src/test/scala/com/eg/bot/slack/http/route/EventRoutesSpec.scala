@@ -1,10 +1,14 @@
 package com.eg.bot.slack.http.route
 
+import cats.effect.IO
 import com.eg.bot.slack.TestImplicits
+import com.eg.bot.slack.http.route.model.SlackEvent.EventCallback
+import com.eg.bot.slack.http.service.InteractionQueue
 import org.http4s.Status.{BadRequest, Ok}
 import org.http4s.headers.`Content-Type`
 import org.http4s.implicits._
 import org.http4s.{Header, Headers, MediaType, Method}
+import org.mockito.scalatest.MockitoSugar
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -360,9 +364,15 @@ class EventRoutesSpec extends AnyFlatSpec with Matchers {
     response.status shouldBe BadRequest
   }
 
-  private trait Scope extends RoutesBaseScope with TestImplicits {
+  private trait Scope extends RoutesBaseScope with TestImplicits with MockitoSugar {
 
-    val regularRoutes = EventRoutes()
+    private val interactionQueueMock = {
+      val m = mock[InteractionQueue[EventCallback.Event]]
+      when(m.push(any[EventCallback.Event]))
+        .thenReturn(IO.pure(true))
+      m
+    }
+    val regularRoutes = EventRoutes(interactionQueueMock)
 
   }
 

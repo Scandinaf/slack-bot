@@ -32,6 +32,7 @@ lazy val root = project.in(file("."))
         pureConfig,
         typeSafeConfig,
         scalatest,
+        mockito,
         logbackClassic,
         slf4j,
       )
