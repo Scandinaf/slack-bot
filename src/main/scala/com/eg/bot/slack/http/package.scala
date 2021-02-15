@@ -23,18 +23,50 @@ package object http {
   object ShowInstances {
 
     implicit val headerShow: Show[Header] =
-      (header: Header) => s"Header - ${header.name}: ${header.value}"
+      (header: Header) => s"Header - ${ header.name }: ${ header.value }"
+
+    implicit val commandShow: Show[Command] =
+      (command: Command) =>
+        s"Command - name: ${ command.name }, text: ${ command.text.getOrElse("Text is missing") }"
+
+    implicit val eventCallbackShow: Show[EventCallback] =
+      (callback: EventCallback) =>
+        s"Event Callback - ${ callback.event }"
 
   }
 
   object CompanionObject {
 
-    implicit class RequestCompanion(req: Request[IO]) {
+    implicit class MessageCompanion(msg: Message[IO]) {
 
-      def getHeader(headerName: String): Either[HeaderNotFound, Header] =
-        req.headers
+      val prettyHeaders: String =
+        msg.headers
+          .redactSensitive(Headers.SensitiveHeaders.contains)
+          .toList
+          .mkString("Headers(", ", ", ")")
+
+      val requestIdHeader: Header =
+        msg.headers
+          .get(CaseInsensitiveString("X-Request-ID"))
+          .getOrElse(Header("X-Request-ID", "Undefined"))
+
+      def getBodyText(): IO[String] =
+        msg.bodyText
+          .compile
+          .string
+
+      def getPrettyBodyText(): IO[String] =
+        getBodyText()
+          .map(text => s"""body="$text"""")
+
+      def getHeaderOrNotFound(headerName: String): Either[HeaderNotFound, Header] =
+        msg.headers
           .get(CaseInsensitiveString(headerName))
           .toRight(HeaderNotFound(headerName))
+
+    }
+
+    implicit class RequestCompanion(req: Request[IO]) {
 
       def asAccumulating[A](implicit decoder: Decoder[A]): IO[A] = for {
         bodyText <- req.bodyText.compile.string
@@ -47,7 +79,7 @@ package object http {
             .toEither
             .leftMap(nel =>
               InvalidMessageBodyFailure(
-                s"Could not decode JSON. Reasons - ${nel.map(_.getMessage()).mkString_(";")}.",
+                s"Could not decode JSON. Reasons - ${ nel.map(_.getMessage()).mkString_(";") }.",
                 None
               )
             )
@@ -75,7 +107,7 @@ package object http {
 
       final case class IncorrectHeaderValue(header: Header, expectedType: Class[_])
         extends HttpException(
-          show"The header contains incorrect value. $header, expectedType - ${expectedType.getName}."
+          show"The header contains incorrect value. $header, expectedType - ${ expectedType.getName }."
         )
 
     }
@@ -114,7 +146,7 @@ package object http {
       implicit val editInformationDecoder: Decoder[EventCallback.Event.Message.EditInformation] =
         deriveConfiguredDecoder
       implicit val embeddedRegularMessageDecoder
-        : Decoder[EventCallback.Event.Message.EmbeddedMessage.RegularMessage] =
+      : Decoder[EventCallback.Event.Message.EmbeddedMessage.RegularMessage] =
         deriveConfiguredDecoder
       implicit val embeddedMeMessageDecoder: Decoder[EventCallback.Event.Message.EmbeddedMessage.MeMessage] =
         deriveConfiguredDecoder
@@ -163,13 +195,13 @@ package object http {
         val messageWidenDecoder: Decoder[EventCallback.Event] = messageDecoder.widen
 
         Decoder.decodeJsonObject
-          .emap(_(discriminator)
+          .emap(_ (discriminator)
             .toRight(s"The field '$discriminator' is required")
             .flatMap(_.asString
               .toRight(s"The field '$discriminator' must be of the string type"))).flatMap {
-            case "message" => messageWidenDecoder
-            case _         => eventDecoder
-          }
+          case "message" => messageWidenDecoder
+          case _         => eventDecoder
+        }
 
       }
       implicit val eventCallbackDecoder: Decoder[EventCallback] = deriveConfiguredDecoder

@@ -4,18 +4,20 @@ import cats.data.{Kleisli, OptionT}
 import cats.effect.IO
 import cats.syntax.either._
 import cats.syntax.option._
+import cats.syntax.show._
 import com.eg.bot.slack.config.model.Secret
 import com.eg.bot.slack.http.CompanionObject._
 import com.eg.bot.slack.http.Exception.HttpException
 import com.eg.bot.slack.http.Exception.HttpException.IncorrectHeaderValue
 import com.eg.bot.slack.http.middleware.Exception.MiddlewareException
 import com.eg.bot.slack.http.middleware.Exception.MiddlewareException.{IncorrectSignature, ReplayAttack}
-import com.eg.bot.slack.logging.LogOf
+import com.eg.bot.slack.logging.{Log, LogOf}
 import com.eg.bot.slack.util.TimeHelper
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import org.http4s.dsl.io._
 import org.http4s.{HttpRoutes, _}
+import com.eg.bot.slack.http.ShowInstances._
 
 import scala.util.control.NonFatal
 
@@ -24,7 +26,7 @@ class SignedSecretVerifier(signingSecret: Secret)(implicit logOf: LogOf[IO]) {
   def wrap(routes: HttpRoutes[IO]): HttpRoutes[IO] = {
 
     def getTimestamp(req: Request[IO]): Either[HttpException, Long] =
-      req.getHeader("X-Slack-Request-Timestamp")
+      req.getHeaderOrNotFound("X-Slack-Request-Timestamp")
         .flatMap(header => {
           Either.catchNonFatal(header.value.toLong)
             .leftMap(_ => IncorrectHeaderValue(header, Long.getClass))
@@ -70,43 +72,47 @@ class SignedSecretVerifier(signingSecret: Secret)(implicit logOf: LogOf[IO]) {
 
     }
 
+    def handler(
+      req: Request[IO]
+    )(implicit
+      requestId: Header,
+      logger: Log[IO]
+    ): IO[Option[Response[IO]]] = (for {
+      timestamp <- IO.fromEither(getTimestamp(req))
+      _ <- logger.info(show"Attempting to check a request for a reply attack. $requestId.")
+      _ <- IO.fromEither(checkReplyAttack(timestamp, TimeHelper.getTimestamp))
+      requestBody <- req.getBodyText()
+      slackSignature <- generateSlackSignature(signingSecret.value, s"v0:$timestamp:$requestBody")
+      headerSignature <- IO.fromEither(req.getHeaderOrNotFound("X-Slack-Signature")).map(_.value)
+      _ <- logger.info(show"Attempting to check a request signature. $requestId.")
+      _ <- IO.fromEither(checkSignature(headerSignature, slackSignature))
+
+    } yield ())
+      .as[Option[Response[IO]]](None)
+      .handleErrorWith {
+
+        case error: HttpException =>
+          logger.error(
+            show"As part of the request signature verification, there were problems with the received request. $requestId.",
+            error
+          ) *> BadRequest()
+            .map(_.some)
+
+        case NonFatal(error) =>
+          logger.error(
+            show"As part of the request signature verification, there were problems with the application. $requestId.",
+            error
+          ) *> InternalServerError()
+            .map(_.some)
+      }
+
     Kleisli { req: Request[IO] =>
       OptionT(
-        logOf.apply(SignedSecretVerifier.getClass)
-          .flatMap(logger => {
-            (for {
-              _ <- logger.info(s"The following request was received. Request - $req.")
-              timestamp <- IO.fromEither(getTimestamp(req))
-              _ <- logger.info(s"Attempting to check a request for a reply attack. Request - $req.")
-              _ <- IO.fromEither(
-                checkReplyAttack(timestamp, TimeHelper.getTimestamp)
-              )
-              requestBody <- req.bodyText.compile.string
-              slackSignature <- generateSlackSignature(signingSecret.value, s"v0:$timestamp:$requestBody")
-              headerSignature <- IO.fromEither(req.getHeader("X-Slack-Signature")).map(_.value)
-              _ <- logger.info(s"Attempting to check a request signature. Request - $req.")
-              _ <- IO.fromEither(
-                checkSignature(headerSignature, slackSignature)
-              )
-            } yield ())
-              .as[Option[Response[IO]]](None)
-              .handleErrorWith {
-
-                case error: HttpException =>
-                  logger.error(
-                    s"As part of the request signature verification, there were problems with the received request. Request - $req.",
-                    error
-                  ) *> BadRequest()
-                    .map(_.some)
-
-                case NonFatal(error) =>
-                  logger.error(
-                    s"As part of the request signature verification, there were problems with the application. Request - $req.",
-                    error
-                  ) *> InternalServerError()
-                    .map(_.some)
-              }
-          })
+        for {
+          implicit0(logger: Log[IO]) <- logOf.apply(SignedSecretVerifier.getClass)
+          implicit0(requestId: Header) = req.requestIdHeader
+          response <- handler(req)
+        } yield response
       ).orElse(routes(req))
 
     }

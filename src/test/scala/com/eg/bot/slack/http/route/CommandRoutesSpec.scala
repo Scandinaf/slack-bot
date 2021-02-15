@@ -24,7 +24,7 @@ class CommandRoutesSpec extends AnyFlatSpec with Matchers {
       ).unsafeRunSync()
 
     response.status shouldBe Ok
-    response.as[String].unsafeRunSync() shouldBe "Received text - test."
+    response.as[String].unsafeRunSync() shouldBe "Received text - 'test'."
   }
 
   it should "return 'Received text - Nothing.' for the correct request #1" in new Scope {
@@ -42,7 +42,7 @@ class CommandRoutesSpec extends AnyFlatSpec with Matchers {
       ).unsafeRunSync()
 
     response.status shouldBe Ok
-    response.as[String].unsafeRunSync() shouldBe "Received text - Nothing."
+    response.as[String].unsafeRunSync() shouldBe "Received text - 'Text is missing'."
   }
 
   it should "return 'Received text - Nothing.' for the correct request #2" in new Scope {
@@ -60,7 +60,7 @@ class CommandRoutesSpec extends AnyFlatSpec with Matchers {
       ).unsafeRunSync()
 
     response.status shouldBe Ok
-    response.as[String].unsafeRunSync() shouldBe "Received text - Nothing."
+    response.as[String].unsafeRunSync() shouldBe "Received text - 'Text is missing'."
   }
 
   it should "return BadRequest for the incorrect request #1" in new Scope {
