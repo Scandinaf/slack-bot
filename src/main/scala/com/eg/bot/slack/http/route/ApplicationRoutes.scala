@@ -6,6 +6,8 @@ import com.eg.bot.slack.http.middleware.SignedSecretVerifier
 import com.eg.bot.slack.http.route.model.SlackEvent.EventCallback
 import com.eg.bot.slack.http.service.InteractionQueue
 import com.eg.bot.slack.logging.LogOf
+import fs2.Stream
+import fs2.text.utf8Decode
 import org.http4s.HttpRoutes
 import org.http4s.server.Router
 import org.http4s.server.middleware.Logger
@@ -19,9 +21,14 @@ object ApplicationRoutes {
     logOf: LogOf[IO],
     concurrent: Concurrent[IO]
   ): HttpRoutes[IO] =
-    Logger.httpRoutes(
+    Logger.httpRoutesLogBodyText(
       logHeaders = true,
-      logBody = true,
+      logBody = (stream: Stream[IO, Byte]) =>
+        stream.through(utf8Decode)
+          .compile
+          .last
+          .map(_.getOrElse(""))
+          .some,
       logAction = (
         (logMsg: String) =>
           logOf.apply(ApplicationRoutes.getClass)

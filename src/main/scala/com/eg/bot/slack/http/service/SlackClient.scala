@@ -32,7 +32,7 @@ class SlackClient(httpClient: Client[IO], config: SlackConfig.Client)(implicit l
   } yield ()
 
   protected def handleResponse(response: Response[IO])(implicit logger: Log[IO]): IO[Unit] =
-    IO.whenA(response.status.code != 200)(logger.error(s"The request failed. Response - $response"))
+    IO.whenA(response.status.code != 200)(logger.error(s"The request failed. Response - $response."))
 
 }
 

@@ -19,7 +19,7 @@ import org.http4s.{HttpRoutes, _}
 
 import scala.util.control.NonFatal
 
-class SignedSecretVerifier(private val signingSecret: Secret)(implicit val logOf: LogOf[IO]) {
+class SignedSecretVerifier(signingSecret: Secret)(implicit logOf: LogOf[IO]) {
 
   def wrap(routes: HttpRoutes[IO]): HttpRoutes[IO] = {
 
