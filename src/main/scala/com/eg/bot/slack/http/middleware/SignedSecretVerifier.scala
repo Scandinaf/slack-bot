@@ -26,7 +26,7 @@ class SignedSecretVerifier(signingSecret: Secret)(implicit logOf: LogOf[IO]) {
   def wrap(routes: HttpRoutes[IO]): HttpRoutes[IO] = {
 
     def getTimestamp(req: Request[IO]): Either[HttpException, Long] =
-      req.getHeaderOrNotFound("X-Slack-Request-Timestamp")
+      req.getHeaderEither("X-Slack-Request-Timestamp")
         .flatMap(header => {
           Either.catchNonFatal(header.value.toLong)
             .leftMap(_ => IncorrectHeaderValue(header, Long.getClass))
@@ -83,7 +83,7 @@ class SignedSecretVerifier(signingSecret: Secret)(implicit logOf: LogOf[IO]) {
       _ <- IO.fromEither(checkReplyAttack(timestamp, TimeHelper.getTimestamp))
       requestBody <- req.getBodyText()
       slackSignature <- generateSlackSignature(signingSecret.value, s"v0:$timestamp:$requestBody")
-      headerSignature <- IO.fromEither(req.getHeaderOrNotFound("X-Slack-Signature")).map(_.value)
+      headerSignature <- IO.fromEither(req.getHeaderEither("X-Slack-Signature")).map(_.value)
       _ <- logger.info(show"Attempting to check a request signature. $requestId.")
       _ <- IO.fromEither(checkSignature(headerSignature, slackSignature))
 

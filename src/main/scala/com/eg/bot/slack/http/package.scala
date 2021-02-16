@@ -15,6 +15,7 @@ import io.circe.{Codec, Decoder, Encoder}
 import org.http4s._
 import org.http4s.circe.jsonEncoderOf
 import org.http4s.util.CaseInsensitiveString
+import com.eg.bot.slack.http.CompanionObject.UrlFormCompanion
 import cats.data.EitherT
 import com.eg.bot.slack.http.ShowInstances._
 
@@ -27,7 +28,7 @@ package object http {
 
     implicit val commandShow: Show[Command] =
       (command: Command) =>
-        s"Command - name: ${command.name}, text: ${command.text.getOrElse("Text is missing")}"
+        s"Command - type: ${command.`type`}, text: ${command.text.getOrElse("Text is missing")}"
 
     implicit val eventCallbackShow: Show[EventCallback] =
       (callback: EventCallback) => s"Event Callback - ${callback.event}"
@@ -58,7 +59,7 @@ package object http {
         getBodyText()
           .map(text => s"""body="$text"""")
 
-      def getHeaderOrNotFound(headerName: String): Either[HeaderNotFound, Header] =
+      def getHeaderEither(headerName: String): Either[HeaderNotFound, Header] =
         msg.headers
           .get(CaseInsensitiveString(headerName))
           .toRight(HeaderNotFound(headerName))
@@ -84,6 +85,19 @@ package object http {
             )
         )
       } yield result
+
+    }
+
+    implicit class UrlFormCompanion(urlForm: UrlForm) {
+
+      def getFirstEither(fieldName: String): Either[InvalidMessageBodyFailure, String] =
+        urlForm
+          .getFirst(fieldName)
+          .toRight(
+            InvalidMessageBodyFailure(
+              s"The data received doesn't contain any information about the following field - $fieldName"
+            )
+          )
 
     }
 
@@ -209,27 +223,35 @@ package object http {
 
     }
 
-    implicit val commandEntityDecoder: EntityDecoder[IO, Command] =
+    implicit val commandEntityDecoder: EntityDecoder[IO, Command] = {
+
+      def toCommandType(value: String): Either[InvalidMessageBodyFailure, Command.CommandType] =
+        Command.CommandType
+          .withNameInsensitiveOption(
+            value.replaceAll("[/_]", "")
+          ).toRight(
+            InvalidMessageBodyFailure(
+              s"Unknown command type. Passed value - '$value'"
+            )
+          )
+
       EntityDecoder[IO, UrlForm]
         .flatMapR(urlForm =>
           EitherT(
             IO.pure(for {
-              command <- urlForm
-                .getFirst("command")
-                .toRight(
-                  InvalidMessageBodyFailure(
-                    "The data received doesn't contain any information about the following field - command"
-                  )
-                )
+              commandType <- urlForm
+                .getFirstEither("command")
+                .flatMap(toCommandType(_))
               text = urlForm
                 .getFirst("text")
                 .flatMap(text =>
                   if (text.strip().isEmpty) None
                   else text.some
                 )
-            } yield Command(command, text))
+            } yield Command(commandType, text))
           )
         )
+    }
 
     implicit val postMessageEncoder: Encoder[PostMessage] = deriveConfiguredEncoder
     implicit val postMessageEntityEncoder: EntityEncoder[IO, PostMessage] = jsonEncoderOf
