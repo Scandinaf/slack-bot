@@ -11,18 +11,28 @@ import org.http4s.{HttpRoutes, Request}
 // logging information about the request body twice.
 object ServerLogger extends BaseLogger {
 
-  def apply(routes: HttpRoutes[IO])(implicit logOf: LogOf[IO]): HttpRoutes[IO] =
-    Kleisli { req: Request[IO] =>
-      OptionT.liftF(
-        logOf.apply(ServerLogger.getClass)
-          .flatMap(implicit logger => logMessageWithBodyText(req))
-      ).flatMap(_ =>
+  object Request {
+
+    def apply(routes: HttpRoutes[IO])(implicit logOf: LogOf[IO]): HttpRoutes[IO] =
+      Kleisli { req: Request[IO] =>
+        OptionT.liftF(
+          logOf.apply(ServerLogger.getClass)
+            .flatMap(implicit logger => logMessageWithBodyText(req))
+        ).flatMap(_ => routes(req))
+      }
+
+  }
+
+  object Response {
+
+    def apply(routes: HttpRoutes[IO])(implicit logOf: LogOf[IO]): HttpRoutes[IO] =
+      Kleisli { req: Request[IO] =>
         routes(req).semiflatTap(res => {
           logOf.apply(ServerLogger.getClass)
             .flatMap(implicit logger => logMessageWithBodyText(res))
         })
-      )
+      }
 
-    }
+  }
 
 }

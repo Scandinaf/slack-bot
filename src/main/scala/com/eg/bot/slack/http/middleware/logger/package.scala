@@ -11,7 +11,8 @@ package object logger {
 
     implicit val requestShow: Show[Request[IO]] =
       (req: Request[IO]) =>
-        s"""-------------------->
+        s"""
+           |-------------------->
            |-------------------->
            |-------------------->
            |${req.httpVersion} ${req.method} ${req.uri} ${req.prettyHeaders}"""
@@ -19,7 +20,8 @@ package object logger {
 
     implicit val responseShow: Show[Response[IO]] =
       (res: Response[IO]) =>
-        s"""<--------------------
+        s"""
+           |<--------------------
            |<--------------------
            |<--------------------
            |${res.httpVersion} ${res.status} ${res.prettyHeaders}"""

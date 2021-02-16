@@ -19,12 +19,14 @@ object ApplicationRoutes {
     logOf: LogOf[IO],
     concurrent: Concurrent[IO]
   ): HttpRoutes[IO] =
-    RequestId.httpRoutes(
-      ServerLogger(
-        signedSecretVerifier.wrap(
-          Router[IO](
-            "/slack/command" -> CommandRoutes(),
-            "slack/event" -> EventRoutes(interactionQueue)
+    ServerLogger.Response(
+      RequestId.httpRoutes(
+        ServerLogger.Request(
+          signedSecretVerifier.wrap(
+            Router[IO](
+              "/slack/command" -> CommandRoutes(),
+              "slack/event" -> EventRoutes(interactionQueue)
+            )
           )
         )
       )
