@@ -7,7 +7,7 @@ import cats.effect.IO
 import cats.implicits._
 import com.eg.bot.slack.http.CompanionObject.UrlFormCompanion
 import com.eg.bot.slack.http.Exception.HttpException.HeaderNotFound
-import com.eg.bot.slack.http.model.{Channel, Text}
+import com.eg.bot.slack.http.model.{Channel, Text, ThreadTs}
 import com.eg.bot.slack.http.route.model.SlackEvent.{EventCallback, UrlVerification}
 import com.eg.bot.slack.http.route.model.{Command, SlackEvent}
 import com.eg.bot.slack.http.service.model.{RequestEntity, ResponseEntity}
@@ -30,6 +30,9 @@ package object http {
     implicit val textOptShow: Show[Option[Text]] =
       (textOpt: Option[Text]) => s"${textOpt.getOrElse("Text is missing")}"
 
+    implicit val threadTsShow: Show[ThreadTs] =
+      (threadTs: ThreadTs) => s"ThreadTs - ${threadTs.value}"
+
     implicit val headerShow: Show[Header] =
       (header: Header) => s"Header - ${header.name}: ${header.value}"
 
@@ -41,7 +44,7 @@ package object http {
 
     implicit val postMessageShow: Show[RequestEntity.PostMessage] =
       (postMessage: RequestEntity.PostMessage) =>
-        show"PostMessage - text: ${postMessage.text}, channel - ${postMessage.channel.value}"
+        show"PostMessage - text: ${postMessage.text}, channel - ${postMessage.channel.value}, thread_ts - ${postMessage.threadTs}"
 
   }
 
@@ -145,6 +148,7 @@ package object http {
         .withSnakeCaseConstructorNames
     implicit val channelCodec: Codec[Channel] = deriveUnwrappedCodec
     implicit val textCodec: Codec[Text] = deriveUnwrappedCodec
+    implicit val threadTsCodec: Codec[ThreadTs] = deriveUnwrappedCodec
     implicit val slackEventDecoder: Decoder[SlackEvent] = {
 
       val discriminator = "type"

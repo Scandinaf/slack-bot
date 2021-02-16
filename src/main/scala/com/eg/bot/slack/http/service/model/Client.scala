@@ -1,6 +1,6 @@
 package com.eg.bot.slack.http.service.model
 
-import com.eg.bot.slack.http.model.{Channel, Text}
+import com.eg.bot.slack.http.model.{Channel, Text, ThreadTs}
 
 sealed trait RequestEntity
 
@@ -8,7 +8,8 @@ object RequestEntity {
 
   final case class PostMessage(
     text: Option[Text],
-    channel: Channel
+    channel: Channel,
+    threadTs: Option[ThreadTs]
   ) extends RequestEntity
 
 }

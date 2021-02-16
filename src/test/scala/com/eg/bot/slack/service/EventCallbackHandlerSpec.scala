@@ -2,7 +2,7 @@ package com.eg.bot.slack.service
 
 import cats.effect.IO
 import com.eg.bot.slack.TestImplicits
-import com.eg.bot.slack.http.model.{Channel, Text}
+import com.eg.bot.slack.http.model.{Channel, Text, ThreadTs}
 import com.eg.bot.slack.http.route.model.SlackEvent.EventCallback.Event.{Message, Timestamp}
 import com.eg.bot.slack.http.route.model.SlackEvent.EventCallback.{TeamId, UserId}
 import com.eg.bot.slack.http.service.model.RequestEntity
@@ -10,6 +10,7 @@ import com.eg.bot.slack.http.service.{EventCallbackHandler, SlackClient}
 import com.eg.bot.slack.util.TimeHelper
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.flatspec.AnyFlatSpec
+import cats.syntax.option._
 
 class EventCallbackHandlerSpec extends AnyFlatSpec {
 
@@ -21,7 +22,8 @@ class EventCallbackHandlerSpec extends AnyFlatSpec {
         UserId("test_user"),
         Timestamp(TimeHelper.getTimestamp),
         TeamId("test_team"),
-        Channel("test_channel")
+        Channel("test_channel"),
+        ThreadTs("test_thread_ts").some
       )
     ).unsafeRunSync()
 
@@ -30,7 +32,8 @@ class EventCallbackHandlerSpec extends AnyFlatSpec {
         Text("test text"),
         UserId("test_user"),
         Timestamp(TimeHelper.getTimestamp),
-        Channel("test_channel")
+        Channel("test_channel"),
+        None
       )
     ).unsafeRunSync()
 

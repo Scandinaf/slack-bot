@@ -1,6 +1,6 @@
 package com.eg.bot.slack.http.route.model
 
-import com.eg.bot.slack.http.model.{Channel, Text}
+import com.eg.bot.slack.http.model.{Channel, Text, ThreadTs}
 
 sealed trait SlackEvent {
 
@@ -58,7 +58,8 @@ object SlackEvent {
           user: UserId,
           ts: Timestamp,
           team: TeamId,
-          channel: Channel
+          channel: Channel,
+          threadTs: Option[ThreadTs]
         ) extends Message
 
         final case class MessageChanged(
@@ -72,7 +73,8 @@ object SlackEvent {
           text: Text,
           user: UserId,
           ts: Timestamp,
-          channel: Channel
+          channel: Channel,
+          threadTs: Option[ThreadTs]
         ) extends Message
 
         final case class MessageDeleted(
@@ -90,14 +92,16 @@ object SlackEvent {
             user: UserId,
             ts: Timestamp,
             team: TeamId,
-            edited: Option[EditInformation]
+            edited: Option[EditInformation],
+            threadTs: Option[ThreadTs]
           ) extends EmbeddedMessage
 
           final case class MeMessage(
             text: Text,
             user: UserId,
             ts: Timestamp,
-            edited: Option[EditInformation]
+            edited: Option[EditInformation],
+            threadTs: Option[ThreadTs]
           ) extends EmbeddedMessage
 
         }

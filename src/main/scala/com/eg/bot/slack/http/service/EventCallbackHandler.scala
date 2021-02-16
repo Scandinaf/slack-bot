@@ -22,21 +22,23 @@ class EventCallbackHandler(slackClient: SlackClient)(implicit logOf: LogOf[IO])
   protected def handleMessage(msg: Event.Message)(implicit logger: Log[IO]): IO[Unit] =
     msg match {
 
-      case Message.RegularMessage(text, _, _, _, channel) =>
+      case Message.RegularMessage(text, _, _, _, channel, threadTs) =>
         logger.info("Trying to process an ordinary message.") *>
           slackClient.postMessage(
             RequestEntity.PostMessage(
               text = Text(s"Reply to an ordinary message. Your text - '${text.value}'.").some,
-              channel = channel
+              channel = channel,
+              threadTs = threadTs
             )
           )
 
-      case Message.MeMessage(text, _, _, channel) =>
+      case Message.MeMessage(text, _, _, channel, threadTs) =>
         logger.info("Trying to process an me message.") *>
           slackClient.postMessage(
             RequestEntity.PostMessage(
               text = Text(s"Reply to an me message. Your text - ${text.value}.").some,
-              channel = channel
+              channel = channel,
+              threadTs
             )
           )
 
