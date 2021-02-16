@@ -5,7 +5,7 @@ import java.util.concurrent.Executors
 import cats.effect.{Blocker, ExitCode, IO, IOApp, Resource}
 import com.eg.bot.slack.config.ApplicationConfigReader
 import com.eg.bot.slack.http.client.HttpClientModule
-import com.eg.bot.slack.http.middleware.SignedSecretVerifier
+import com.eg.bot.slack.http.middleware.server.SignedSecretVerifier
 import com.eg.bot.slack.http.route.ApplicationRoutes
 import com.eg.bot.slack.http.server.HttpServerModule
 import com.eg.bot.slack.http.service.{EventCallbackHandler, InteractionQueue, SlackClient}

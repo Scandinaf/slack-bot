@@ -49,7 +49,7 @@ object EventRoutes extends BaseRoutes {
 
       case req @ POST -> Root => for {
           implicit0(logger: Log[IO]) <- logOf.apply(EventRoutes.getClass)
-          implicit0(requestId: Header) = req.requestIdHeader
+          implicit0(requestId: Header) = req.getRequestIdHeaderOrEmpty
           response <- handler(req)
         } yield response
 

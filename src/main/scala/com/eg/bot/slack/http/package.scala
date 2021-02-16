@@ -1,37 +1,47 @@
 package com.eg.bot.slack
 
+import java.util.UUID
+
 import cats.Show
 import cats.effect.IO
 import cats.implicits._
+import com.eg.bot.slack.http.CompanionObject.UrlFormCompanion
 import com.eg.bot.slack.http.Exception.HttpException.HeaderNotFound
 import com.eg.bot.slack.http.model.{Channel, Text}
 import com.eg.bot.slack.http.route.model.SlackEvent.{EventCallback, UrlVerification}
 import com.eg.bot.slack.http.route.model.{Command, SlackEvent}
-import com.eg.bot.slack.http.service.model.PostMessage
+import com.eg.bot.slack.http.service.model.{RequestEntity, ResponseEntity}
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.semiauto._
 import io.circe.parser._
 import io.circe.{Codec, Decoder, Encoder}
 import org.http4s._
 import org.http4s.circe.jsonEncoderOf
-import org.http4s.util.CaseInsensitiveString
-import com.eg.bot.slack.http.CompanionObject.UrlFormCompanion
+import org.http4s.util.{CaseInsensitiveString => CIString}
 import cats.data.EitherT
 import com.eg.bot.slack.http.ShowInstances._
 
 package object http {
 
+  val requestIdHeaderKey: CIString = CIString("X-Request-ID")
+
   object ShowInstances {
+
+    implicit val textOptShow: Show[Option[Text]] =
+      (textOpt: Option[Text]) => s"${textOpt.getOrElse("Text is missing")}"
 
     implicit val headerShow: Show[Header] =
       (header: Header) => s"Header - ${header.name}: ${header.value}"
 
     implicit val commandShow: Show[Command] =
-      (command: Command) =>
-        s"Command - type: ${command.`type`}, text: ${command.text.getOrElse("Text is missing")}"
+      (command: Command) => show"Command - type: ${command.`type`.entryName}, text: ${command.text}"
 
     implicit val eventCallbackShow: Show[EventCallback] =
       (callback: EventCallback) => s"Event Callback - ${callback.event}"
+
+    implicit val postMessageShow: Show[RequestEntity.PostMessage] =
+      (postMessage: RequestEntity.PostMessage) =>
+        show"PostMessage - text: ${postMessage.text}, channel - ${postMessage.channel.value}"
 
   }
 
@@ -45,10 +55,9 @@ package object http {
           .toList
           .mkString("Headers(", ", ", ")")
 
-      val requestIdHeader: Header =
-        msg.headers
-          .get(CaseInsensitiveString("X-Request-ID"))
-          .getOrElse(Header("X-Request-ID", "Undefined"))
+      def getRequestIdHeaderOrEmpty: Header =
+        msg.headers.get(requestIdHeaderKey)
+          .getOrElse(Header.Raw(requestIdHeaderKey, "UNDEFINED"))
 
       def getBodyText(): IO[String] =
         msg.bodyText
@@ -61,7 +70,7 @@ package object http {
 
       def getHeaderEither(headerName: String): Either[HeaderNotFound, Header] =
         msg.headers
-          .get(CaseInsensitiveString(headerName))
+          .get(CIString(headerName))
           .toRight(HeaderNotFound(headerName))
 
     }
@@ -95,7 +104,7 @@ package object http {
           .getFirst(fieldName)
           .toRight(
             InvalidMessageBodyFailure(
-              s"The data received doesn't contain any information about the following field - $fieldName"
+              s"The field '$fieldName' is required"
             )
           )
 
@@ -174,8 +183,10 @@ package object http {
           deriveConfiguredDecoder
 
         Decoder.decodeJsonObject.flatMap(jsonObj =>
-          if (jsonObj.contains(discriminator)) embeddedMessageDecoder
-          else embeddedRegularMessageWidenDecoder
+          if (jsonObj.contains(discriminator))
+            embeddedMessageDecoder
+          else
+            embeddedRegularMessageWidenDecoder
         )
 
       }
@@ -185,7 +196,6 @@ package object http {
         deriveConfiguredDecoder
       implicit val meMessageDecoder: Decoder[EventCallback.Event.Message.MeMessage] =
         deriveConfiguredDecoder
-
       implicit val deletedMessageDecoder: Decoder[EventCallback.Event.Message.MessageDeleted] =
         deriveConfiguredDecoder
       implicit val messageDecoder: Decoder[EventCallback.Event.Message] = {
@@ -253,8 +263,31 @@ package object http {
         )
     }
 
-    implicit val postMessageEncoder: Encoder[PostMessage] = deriveConfiguredEncoder
-    implicit val postMessageEntityEncoder: EntityEncoder[IO, PostMessage] = jsonEncoderOf
+    implicit val postMessageEncoder: Encoder[RequestEntity.PostMessage] = deriveConfiguredEncoder
+    implicit val postMessageEntityEncoder: EntityEncoder[IO, RequestEntity.PostMessage] = jsonEncoderOf
+
+    implicit val responseEntityDecoder: Decoder[ResponseEntity] =
+      Decoder.decodeJsonObject
+        .emap(jsonObj =>
+          for {
+            entity <-
+              jsonObj("ok")
+                .toRight(s"The field 'ok' is required")
+            isSuccess <-
+              entity.asBoolean
+                .toRight(s"The field 'ok' must be of the boolean type")
+          } yield
+            if (isSuccess) ResponseEntity.Success
+            else ResponseEntity.Failed
+        )
+
+  }
+
+  object Generator {
+
+    def generateRequestIdHeader(): IO[Header] =
+      IO(UUID.randomUUID().toString())
+        .map(Header.Raw(requestIdHeaderKey, _))
 
   }
 

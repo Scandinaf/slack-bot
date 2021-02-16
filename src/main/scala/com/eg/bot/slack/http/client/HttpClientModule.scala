@@ -2,11 +2,11 @@ package com.eg.bot.slack.http.client
 
 import cats.effect.{Blocker, ConcurrentEffect, IO, Resource}
 import com.eg.bot.slack.config.model.HttpClientConfig
+import com.eg.bot.slack.http.middleware.client.RequestId
+import com.eg.bot.slack.http.middleware.logger.client.Logger
 import com.eg.bot.slack.logging.LogOf
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
-import org.http4s.client.middleware.Logger
-import cats.syntax.option._
 
 object HttpClientModule {
 
@@ -22,16 +22,14 @@ object HttpClientModule {
       .withRequestTimeout(config.requestTimeout)
       .withIdleTimeout(config.idleTimeout)
       .resource
-      .map(originalClient =>
-        Logger(
-          logHeaders = true,
-          logBody = true,
-          logAction = (
-            (logMsg: String) =>
-              logOf.apply(HttpClientModule.getClass)
-                .flatMap(_.info(logMsg))
-          ).some
-        )(originalClient)
+      .map(httpClient =>
+        Logger.Response(
+          RequestId(
+            Logger.Request(
+              httpClient
+            )
+          )
+        )
       )
 
 }

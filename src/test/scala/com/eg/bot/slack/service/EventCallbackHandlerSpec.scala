@@ -5,7 +5,7 @@ import com.eg.bot.slack.TestImplicits
 import com.eg.bot.slack.http.model.{Channel, Text}
 import com.eg.bot.slack.http.route.model.SlackEvent.EventCallback.Event.{Message, Timestamp}
 import com.eg.bot.slack.http.route.model.SlackEvent.EventCallback.{TeamId, UserId}
-import com.eg.bot.slack.http.service.model.PostMessage
+import com.eg.bot.slack.http.service.model.RequestEntity
 import com.eg.bot.slack.http.service.{EventCallbackHandler, SlackClient}
 import com.eg.bot.slack.util.TimeHelper
 import org.mockito.scalatest.MockitoSugar
@@ -35,7 +35,7 @@ class EventCallbackHandlerSpec extends AnyFlatSpec {
     ).unsafeRunSync()
 
     verify(slackClientMock, times(2))
-      .postMessage(*[PostMessage])
+      .postMessage(*[RequestEntity.PostMessage])
 
   }
 
@@ -43,7 +43,7 @@ class EventCallbackHandlerSpec extends AnyFlatSpec {
 
     val slackClientMock = {
       val m = mock[SlackClient]
-      when(m.postMessage(any[PostMessage])).thenReturn(IO.unit)
+      when(m.postMessage(any[RequestEntity.PostMessage])).thenReturn(IO.unit)
       m
     }
     val eventCallbackHandler: EventCallbackHandler =

@@ -1,4 +1,4 @@
-package com.eg.bot.slack.http.middleware
+package com.eg.bot.slack.http.middleware.server
 
 import cats.data.{Kleisli, OptionT}
 import cats.effect.IO
@@ -23,7 +23,7 @@ import scala.util.control.NonFatal
 
 class SignedSecretVerifier(signingSecret: Secret)(implicit logOf: LogOf[IO]) {
 
-  def wrap(routes: HttpRoutes[IO]): HttpRoutes[IO] = {
+  def apply(routes: HttpRoutes[IO]): HttpRoutes[IO] = {
 
     def getTimestamp(req: Request[IO]): Either[HttpException, Long] =
       req.getHeaderEither("X-Slack-Request-Timestamp")
@@ -110,7 +110,7 @@ class SignedSecretVerifier(signingSecret: Secret)(implicit logOf: LogOf[IO]) {
       OptionT(
         for {
           implicit0(logger: Log[IO]) <- logOf.apply(SignedSecretVerifier.getClass)
-          implicit0(requestId: Header) = req.requestIdHeader
+          implicit0(requestId: Header) = req.getRequestIdHeaderOrEmpty
           response <- handler(req)
         } yield response
       ).orElse(routes(req))

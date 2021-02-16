@@ -13,6 +13,7 @@ lazy val commonSettings = Seq(
 lazy val root = project.in(file("."))
   .settings(commonSettings)
   .settings(addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"))
+  .settings(addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.3" cross CrossVersion.full))
   .settings(
     mainClass in(Compile, run) := Some("com.eg.bot.slack.Main"),
     libraryDependencies ++=

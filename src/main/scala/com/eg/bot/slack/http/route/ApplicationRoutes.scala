@@ -1,8 +1,8 @@
 package com.eg.bot.slack.http.route
 
 import cats.effect.{Concurrent, IO}
-import com.eg.bot.slack.http.middleware.SignedSecretVerifier
-import com.eg.bot.slack.http.middleware.logger.ServerLogger
+import com.eg.bot.slack.http.middleware.logger.sever.Logger
+import com.eg.bot.slack.http.middleware.server.SignedSecretVerifier
 import com.eg.bot.slack.http.route.model.SlackEvent.EventCallback
 import com.eg.bot.slack.http.service.InteractionQueue
 import com.eg.bot.slack.logging.LogOf
@@ -19,10 +19,10 @@ object ApplicationRoutes {
     logOf: LogOf[IO],
     concurrent: Concurrent[IO]
   ): HttpRoutes[IO] =
-    ServerLogger.Response(
+    Logger.Response(
       RequestId.httpRoutes(
-        ServerLogger.Request(
-          signedSecretVerifier.wrap(
+        Logger.Request(
+          signedSecretVerifier(
             Router[IO](
               "/slack/command" -> CommandRoutes(),
               "slack/event" -> EventRoutes(interactionQueue)
