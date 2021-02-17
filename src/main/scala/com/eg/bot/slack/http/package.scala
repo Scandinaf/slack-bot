@@ -171,6 +171,14 @@ package object http {
         )
       implicit val editInformationDecoder: Decoder[EventCallback.Event.Message.EditInformation] =
         deriveConfiguredDecoder
+      implicit val botIdDecoder: Decoder[EventCallback.Event.Message.BotProfile.BotId] =
+        deriveUnwrappedDecoder
+      implicit val botNameDecoder: Decoder[EventCallback.Event.Message.BotProfile.BotName] =
+        deriveUnwrappedDecoder
+      implicit val appIdDecoder: Decoder[EventCallback.Event.Message.BotProfile.AppId] =
+        deriveUnwrappedDecoder
+      implicit val botProfileDecoder: Decoder[EventCallback.Event.Message.BotProfile] =
+        deriveConfiguredDecoder
       implicit val embeddedRegularMessageDecoder
         : Decoder[EventCallback.Event.Message.EmbeddedMessage.RegularMessage] =
         deriveConfiguredDecoder

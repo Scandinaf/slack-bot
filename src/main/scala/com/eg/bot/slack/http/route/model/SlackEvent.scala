@@ -52,6 +52,20 @@ object SlackEvent {
       object Message {
 
         final case class EditInformation(user: UserId, ts: Timestamp)
+        final case class BotProfile(
+          id: BotProfile.BotId,
+          name: BotProfile.BotName,
+          appId: BotProfile.AppId,
+          teamId: TeamId
+        )
+
+        object BotProfile {
+
+          final case class BotId(value: String) extends AnyVal
+          final case class BotName(value: String) extends AnyVal
+          final case class AppId(value: String) extends AnyVal
+
+        }
 
         final case class RegularMessage(
           text: Text,
@@ -59,7 +73,8 @@ object SlackEvent {
           ts: Timestamp,
           team: TeamId,
           channel: Channel,
-          threadTs: Option[ThreadTs]
+          threadTs: Option[ThreadTs],
+          botProfile: Option[BotProfile]
         ) extends Message
 
         final case class MessageChanged(
@@ -74,7 +89,8 @@ object SlackEvent {
           user: UserId,
           ts: Timestamp,
           channel: Channel,
-          threadTs: Option[ThreadTs]
+          threadTs: Option[ThreadTs],
+          botProfile: Option[BotProfile]
         ) extends Message
 
         final case class MessageDeleted(
@@ -93,7 +109,8 @@ object SlackEvent {
             ts: Timestamp,
             team: TeamId,
             edited: Option[EditInformation],
-            threadTs: Option[ThreadTs]
+            threadTs: Option[ThreadTs],
+            botProfile: Option[BotProfile]
           ) extends EmbeddedMessage
 
           final case class MeMessage(
@@ -101,7 +118,8 @@ object SlackEvent {
             user: UserId,
             ts: Timestamp,
             edited: Option[EditInformation],
-            threadTs: Option[ThreadTs]
+            threadTs: Option[ThreadTs],
+            botProfile: Option[BotProfile]
           ) extends EmbeddedMessage
 
         }
