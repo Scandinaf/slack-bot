@@ -37,20 +37,25 @@ class SlackClient(httpClient: Client[IO], config: SlackConfig.Client)(implicit l
     logger: Log[IO]
   ): IO[Unit] =
     if (response.status.code != 200)
-      logger.error(show"An attempt to send a request failed. $requestId.")
+      logger.error(
+        show"The status of the response received isn't as expected. Status code - ${response.status.code}. $requestId."
+      )
     else
       (for {
         responseEntity <- response.decodeJson[ResponseEntity]
         _ <- responseEntity match {
           case ResponseEntity.Success =>
-            logger.info(show"An attempt to send a request succeeded. $requestId.")
+            logger.info(show"The request sent was successful. $requestId.")
           case ResponseEntity.Failed =>
-            logger.error(show"An attempt to send a request failed. $requestId.")
+            logger.error(show"There is a problem with the sent request. $requestId.")
         }
       } yield ()).handleErrorWith {
 
         case NonFatal(error) =>
-          logger.error(show"An attempt to send a request failed. $requestId.", error)
+          logger.error(
+            show"In the process of decoding the received entity there were problems. $requestId.",
+            error
+          )
 
       }
 
